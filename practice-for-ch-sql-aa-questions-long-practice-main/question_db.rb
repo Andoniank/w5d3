@@ -40,7 +40,15 @@ class User
         @lname = options['lname']
     end
 
-    def 
+    def authored_questions # fname, lname
+        # author = Question.find_by_author_id()
+        # raise "#{} not found in DB" unless author
+
+        # QuestionDatabase.instance.execute()
+    end
+
+    def authored_replies
+    end
 end
 
 #--------------------------------------------------------
@@ -63,6 +71,12 @@ class Question
         return nil if question.length == 0
         Question.new(question.first)
     end
+
+    def author
+    end
+
+    def replies
+    end
 end
 
 #--------------------------------------------------------
@@ -82,6 +96,18 @@ class Reply
     end
 
     def find_by_question_id(question_id)
+    end
+
+    def author
+    end
+
+    def question
+    end
+
+    def parent_reply
+    end
+
+    def child_replies
     end
 end
 
