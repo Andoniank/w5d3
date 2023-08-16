@@ -32,21 +32,18 @@ CREATE TABLE question_follows (
 
 CREATE TABLE replies (
     id INTEGER PRIMARY KEY,
-    subj TEXT NOT NULL,
-    parent_reply TEXT,
-    user_id INTEGER NOT NULL,
-    question_body TEXT NOT NULL,
+    question_id INTEGER NOT NULL,
+    parent_reply_id INTEGER,
     reg_reply TEXT,
-
-    FOREIGN KEY (subj) REFERENCES questions(title)
-    FOREIGN KEY (parent_reply) REFERENCES replies(parent_reply)
+    user_id INTEGER NOT NULL,
+    
+    FOREIGN KEY (parent_reply_id) REFERENCES replies(id)
     FOREIGN KEY (user_id) REFERENCES users(id)
-    FOREIGN KEY (question_body) REFERENCES questions(body)
+    FOREIGN KEY (question_id) REFERENCES questions(id)
 );
 
 CREATE TABLE question_likes (
     id INTEGER PRIMARY KEY,
-    like_question BOOLEAN,
     user_id INTEGER NOT NULL,
     question_id TEXT NOT NULL,
 
@@ -70,17 +67,19 @@ INSERT INTO
     question_follows (user_id, question_id)
 VALUES
     (1, 1),
+    (1, 2),
+    (2, 1),
     (2, 2);
 
 INSERT INTO
-    replies (subj, question_body, parent_reply, reg_reply, user_id)
+    replies (question_id, parent_reply_id, reg_reply, user_id)
 VALUES
-    ('AA project', 'How to create DB', NULL, 'good luck', 2),
-    ('What is grass', 'Is it real', NULL, 'it is fake', 1),
-    ('AA project', 'How to create DB', 'good luck', 'very helpful', 1);
+    ( 1, NULL, 'good luck', 2),
+    ( 2, NULL, 'it is fake', 1),
+    ( 1, 1, 'very helpful', 1);
 
 INSERT INTO
-    question_likes (like_question, user_id, question_id)
+    question_likes (user_id, question_id)
 VALUES
-    (TRUE, 1, 2),
-    (TRUE, 2, 1);
+    (1, 2),
+    (2, 1);
