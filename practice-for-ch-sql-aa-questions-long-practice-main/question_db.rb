@@ -1,7 +1,8 @@
 require 'singleton'
+require 'sqlite3'
 
 class QuestionDatabase < SQLite3::Database
-    incude Singleton
+    include Singleton
 
     def initialize
         super('questions.db')
@@ -15,13 +16,26 @@ end
 
 class User
     attr_accessor :id, :fname, :lname
-
-    def self.find_by_id
+    
+    def self.all
         data = QuestionDatabase.instance.execute("SELECT * FROM users")
         data.map {|datum| User.new(datum)}
     end
 
-    def find_by_name(fname, lname)
+    def self.find_by_id(id)
+        user = QuestionDatabase.instance.execute(<<-SQL, id)
+            SELECT
+                *
+            FROM 
+                users
+            WHERE
+                id = ?
+        SQL
+        return nil if user.length == 0
+        User.new(user.first)
+    end
+
+    def self.find_by_name(fname, lname)
         user = QuestionDatabase.instance.execute(<<-SQL, fname, lname)
             SELECT
                 *
@@ -40,23 +54,60 @@ class User
         @lname = options['lname']
     end
 
-    def authored_questions # fname, lname
-        # author = Question.find_by_author_id()
-        # raise "#{} not found in DB" unless author
-
-        # QuestionDatabase.instance.execute()
+    def authored_questions 
+        author = Question.find_by_author_id(self.id)
+        raise "#{self} not found in DB" unless author
     end
 
     def authored_replies
+        author = Reply.find_by_user_id(self.id)
+        raise "#{self} not found in DB" unless author
+    end
+
+    def create
+        raise "#{self} already in database" if self.id
+        QuestionDatabase.instance.execute(<<-SQL, self.fname, self.lname)
+          INSERT INTO
+            users (fname, lname)
+          VALUES
+            (?, ?)
+        SQL
+        self.id = QuestionDatabase.instance.last_insert_row_id
+    end
+
+    def update
+        raise "#{self} not in database" unless self.id
+        QuestionDatabase.instance.execute(<<-SQL, self.fname, self.lname, self.id)
+          UPDATE
+            users
+          SET
+            fname = ?, lname = ?
+          WHERE
+            id = ?
+        SQL
     end
 end
 
 #--------------------------------------------------------
 
 class Question
-    def self.find_by_id
+    
+    def self.all
         data = QuestionDatabase.instance.execute("SELECT * FROM questions")
         data.map {|datum| Question.new(datum)}
+    end
+    
+    def self.find_by_id(id)
+        q_id = QuestionDatabase.instance.execute(<<-SQL, id)
+            SELECT
+                *
+            FROM 
+                questions
+            WHERE
+                id = ?
+        SQL
+        return nil if q_id.length == 0
+        Question.new(q_id.first)
     end
 
     def find_by_author_id(author_id)
@@ -77,6 +128,8 @@ class Question
 
     def replies
     end
+
+
 end
 
 #--------------------------------------------------------
@@ -93,6 +146,16 @@ class Reply
     end
 
     def find_by_user_id(user_id)
+        reply = QuestionDatabase.instance.execute(<<-SQL, user_id)
+            SELECT
+                *
+            FROM 
+                replies
+            WHERE
+                user_id = ?
+        SQL
+        return nil if reply.length == 0
+        Reply.new(reply.first)
     end
 
     def find_by_question_id(question_id)
